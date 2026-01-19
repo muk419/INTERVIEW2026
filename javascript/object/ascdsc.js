@@ -1,9 +1,9 @@
-let data=[
-  { name: "Rahul", age: 30 },
-  { name: "Neha", age: 28 },
-  { name: "Amit", age: 25 },
-  { name: "Riya", age: 22 }
-]
+// let data=[
+//   { name: "Rahul", age: 30 },
+//   { name: "Neha", age: 28 },
+//   { name: "Amit", age: 25 },
+//   { name: "Riya", age: 22 }
+// ]
 // let finalresult=[]
 // let result=data.reduce((acc,curr)=>{
 //  return  acc.age > curr.age
