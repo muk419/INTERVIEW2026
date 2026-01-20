@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IntersectionObserver - Complete Guide</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+      color: #fff;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+      color: #a855f7;
+      font-size: 2.5rem;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #888;
+      margin-bottom: 30px;
+    }
+
+    .section {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 15px;
+      padding: 25px;
+      margin-bottom: 25px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .section h2 {
+      color: #a855f7;
+      margin-bottom: 15px;
+      font-size: 1.4rem;
+    }
+
+    .theory-box {
+      background: rgba(168, 85, 247, 0.1);
+      border-left: 4px solid #a855f7;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 0 10px 10px 0;
+    }
+
+    .scroll-hint {
+      text-align: center;
+      padding: 30px;
+      font-size: 1.5rem;
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+
+    /* Observable Cards */
+    .observable-card {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 15px;
+      padding: 40px;
+      margin: 30px 0;
+      text-align: center;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.5s ease;
+      opacity: 0.3;
+      transform: translateX(-50px);
+    }
+
+    .observable-card.visible {
+      opacity: 1;
+      transform: translateX(0);
+      border-color: #a855f7;
+      box-shadow: 0 0 30px rgba(168, 85, 247, 0.3);
+    }
+
+    .observable-card h3 {
+      font-size: 2rem;
+      margin-bottom: 15px;
+    }
+
+    .observable-card .emoji {
+      font-size: 4rem;
+      margin-bottom: 15px;
+      display: block;
+    }
+
+    .card-status {
+      display: inline-block;
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-weight: bold;
+      margin-top: 15px;
+    }
+
+    .status-hidden {
+      background: rgba(255, 107, 107, 0.3);
+      color: #ff6b6b;
+    }
+
+    .status-visible {
+      background: rgba(81, 207, 102, 0.3);
+      color: #51cf66;
+    }
+
+    /* Lazy Load Images */
+    .image-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin: 20px 0;
+    }
+
+    .lazy-image {
+      width: 100%;
+      height: 200px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      transition: all 0.5s ease;
+      border: 2px dashed rgba(255, 255, 255, 0.2);
+    }
+
+    .lazy-image.loaded {
+      background: linear-gradient(135deg, #a855f7, #6366f1);
+      border-style: solid;
+      border-color: #a855f7;
+    }
+
+    /* Progress Bar */
+    .progress-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.1);
+      z-index: 1000;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #a855f7, #6366f1);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    /* Viewport Indicator */
+    .viewport-indicator {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 15px 20px;
+      border-radius: 10px;
+      border: 1px solid #a855f7;
+      z-index: 1000;
+    }
+
+    code {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #a855f7;
+    }
+
+    pre {
+      background: #0a0a0a;
+      padding: 15px;
+      border-radius: 10px;
+      overflow-x: auto;
+      margin: 10px 0;
+    }
+
+    pre code {
+      background: none;
+      padding: 0;
+    }
+
+    .highlight {
+      color: #ffc107;
+    }
+
+    .comment {
+      color: #6a9955;
+    }
+
+    /* Infinite Scroll Demo */
+    .infinite-scroll-container {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 10px;
+      padding: 20px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .scroll-item {
+      background: rgba(168, 85, 247, 0.2);
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border-left: 3px solid #a855f7;
+    }
+
+    .loading-indicator {
+      text-align: center;
+      padding: 20px;
+      color: #a855f7;
+    }
+
+    .spacer {
+      height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: #666;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="progress-container">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <div class="viewport-indicator">
+    <strong>Visible Cards:</strong> <span id="visibleCount">0</span>/5
+  </div>
+
+  <div class="container">
+    <h1>👁️ IntersectionObserver</h1>
+    <p class="subtitle">Elements ko Viewport mein Detect karna</p>
+
+    <!-- Theory Section -->
+    <div class="section">
+      <h2>📚 Theory - IntersectionObserver Kya Hai?</h2>
+      <div class="theory-box">
+        <p><strong>IntersectionObserver</strong> ek Web API hai jo detect karta hai ki koi element viewport (ya kisi
+          parent) mein visible hai ya nahi.</p>
+        <br>
+        <p><strong>Kab Use Karte Hain?</strong></p>
+        <ul style="margin-left: 20px; margin-top: 10px;">
+          <li>🖼️ <strong>Lazy Loading Images</strong> - Images tab load karo jab dikhe</li>
+          <li>📜 <strong>Infinite Scroll</strong> - End pe pahunche toh aur data load karo</li>
+          <li>🎬 <strong>Animations</strong> - Jab element dikhe toh animate karo</li>
+          <li>📊 <strong>Analytics</strong> - Track karo user ne kya dekha</li>
+          <li>🎥 <strong>Video Autoplay</strong> - Visible hone pe play karo</li>
+        </ul>
+      </div>
+
+      <h3 style="color: #ffc107; margin: 15px 0;">💡 Syntax:</h3>
+      <pre><code><span class="comment">// Step 1: Options define karo</span>
+const options = {
+    root: null,           <span class="comment">// null = viewport, ya koi parent element</span>
+    rootMargin: '0px',    <span class="comment">// Margin around root</span>
+    threshold: 0.5        <span class="comment">// 0-1: Kitna visible ho toh trigger kare</span>
+};
+
+<span class="comment">// Step 2: Observer banao</span>
+const observer = new IntersectionObserver(<span class="highlight">callback</span>, options);
+
+<span class="comment">// Step 3: Elements observe karo</span>
+observer.observe(<span class="highlight">element1</span>);
+observer.observe(<span class="highlight">element2</span>);
+
+<span class="comment">// Step 4: Callback - jab visibility change ho</span>
+function callback(entries) {
+    entries.forEach(entry => {
+        if (entry.<span class="highlight">isIntersecting</span>) {
+            console.log('Element visible hai!');
+        }
+    });
+}</code></pre>
+    </div>
+
+    <div class="scroll-hint">
+      ⬇️ Scroll karke dekho - cards animate honge! ⬇️
+    </div>
+
+    <!-- Observable Cards Demo -->
+    <div class="observable-card" data-card="1">
+      <span class="emoji">🚀</span>
+      <h3>Card 1 - Rocket</h3>
+      <p>Jab yeh card viewport mein aayega, animate hoga!</p>
+      <span class="card-status status-hidden" id="status-1">Hidden</span>
+    </div>
+
+    <div class="spacer">👇 Keep scrolling...</div>
+
+    <div class="observable-card" data-card="2">
+      <span class="emoji">🎨</span>
+      <h3>Card 2 - Art</h3>
+      <p>IntersectionObserver detect kar raha hai!</p>
+      <span class="card-status status-hidden" id="status-2">Hidden</span>
+    </div>
+
+    <div class="spacer">👇 Almost there...</div>
+
+    <div class="observable-card" data-card="3">
+      <span class="emoji">💡</span>
+      <h3>Card 3 - Idea</h3>
+      <p>50% visible hone pe trigger hota hai (threshold: 0.5)</p>
+      <span class="card-status status-hidden" id="status-3">Hidden</span>
+    </div>
+
+    <div class="spacer">👇 More content...</div>
+
+    <div class="observable-card" data-card="4">
+      <span class="emoji">🎮</span>
+      <h3>Card 4 - Gaming</h3>
+      <p>Real-time visibility tracking!</p>
+      <span class="card-status status-hidden" id="status-4">Hidden</span>
+    </div>
+
+    <div class="spacer">👇 Last one...</div>
+
+    <div class="observable-card" data-card="5">
+      <span class="emoji">🏆</span>
+      <h3>Card 5 - Trophy</h3>
+      <p>Congratulations! Aapne saare cards dekh liye!</p>
+      <span class="card-status status-hidden" id="status-5">Hidden</span>
+    </div>
+
+    <!-- Lazy Loading Demo -->
+    <div class="section" style="margin-top: 50px;">
+      <h2>🖼️ Lazy Loading Images Demo</h2>
+      <div class="theory-box">
+        <p>Neeche wali images sirf tab "load" hongi jab viewport mein dikhengi. Scroll karo!</p>
+      </div>
+
+      <div class="image-container">
+        <div class="lazy-image" data-image="1">📷 Image 1</div>
+        <div class="lazy-image" data-image="2">📷 Image 2</div>
+        <div class="lazy-image" data-image="3">📷 Image 3</div>
+        <div class="lazy-image" data-image="4">📷 Image 4</div>
+        <div class="lazy-image" data-image="5">📷 Image 5</div>
+        <div class="lazy-image" data-image="6">📷 Image 6</div>
+      </div>
+    </div>
+
+    <!-- Complete Code Example -->
+    <div class="section">
+      <h2>💻 Complete Code Example</h2>
+      <pre><code><span class="comment">// ============================================</span>
+<span class="comment">// LAZY LOADING IMAGES WITH INTERSECTION OBSERVER</span>
+<span class="comment">// ============================================</span>
+
+<span class="comment">// 1. Observer options</span>
+const options = {
+    root: null,        <span class="comment">// Viewport ke relative observe karo</span>
+    rootMargin: '50px', <span class="comment">// 50px pehle se load karna shuru karo</span>
+    threshold: 0.1     <span class="comment">// 10% visible ho toh trigger karo</span>
+};
+
+<span class="comment">// 2. Callback function</span>
+function handleIntersection(entries, observer) {
+    entries.forEach(entry => {
+        if (entry.<span class="highlight">isIntersecting</span>) {
+            const img = entry.target;
+            
+            <span class="comment">// Image load karo</span>
+            img.src = img.dataset.src;
+            img.classList.add('loaded');
+            
+            <span class="comment">// Ab observe karna band karo</span>
+            observer.<span class="highlight">unobserve</span>(img);
+        }
+    });
+}
+
+<span class="comment">// 3. Observer create karo</span>
+const imageObserver = new IntersectionObserver(handleIntersection, options);
+
+<span class="comment">// 4. Saari lazy images observe karo</span>
+document.querySelectorAll('img[data-src]').forEach(img => {
+    imageObserver.observe(img);
+});
+
+
+<span class="comment">// ============================================</span>
+<span class="comment">// INFINITE SCROLL EXAMPLE</span>
+<span class="comment">// ============================================</span>
+
+const sentinel = document.querySelector('#loadMore');
+
+const scrollObserver = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) {
+        <span class="comment">// End tak pahunch gaye - aur data load karo</span>
+        loadMoreContent();
+    }
+}, { threshold: 1.0 });
+
+scrollObserver.observe(sentinel);</code></pre>
+    </div>
+
+    <!-- Threshold Explanation -->
+    <div class="section">
+      <h2>📐 Threshold Samjho</h2>
+      <div class="theory-box">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr style="border-bottom: 1px solid rgba(255,255,255,0.2);">
+            <th style="padding: 10px; text-align: left;">Threshold Value</th>
+            <th style="padding: 10px; text-align: left;">Matlab</th>
+          </tr>
+          <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <td style="padding: 10px;"><code>0</code></td>
+            <td style="padding: 10px;">1 pixel bhi dikhe toh trigger</td>
+          </tr>
+          <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <td style="padding: 10px;"><code>0.5</code></td>
+            <td style="padding: 10px;">50% visible ho toh trigger</td>
+          </tr>
+          <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <td style="padding: 10px;"><code>1.0</code></td>
+            <td style="padding: 10px;">100% visible ho toh trigger</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px;"><code>[0, 0.25, 0.5, 0.75, 1]</code></td>
+            <td style="padding: 10px;">Multiple points pe trigger</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Use Cases -->
+    <div class="section">
+      <h2>🌍 Real World Use Cases</h2>
+      <div class="theory-box">
+        <p><strong>1. 🖼️ Lazy Loading:</strong> Images/videos tab load karo jab visible ho</p>
+        <p><strong>2. 📜 Infinite Scroll:</strong> Bottom pe aaye toh aur content load karo</p>
+        <p><strong>3. 🎬 Animations:</strong> Scroll pe elements animate karo</p>
+        <p><strong>4. 📊 Analytics:</strong> Track karo user ne kya dekha (ad impressions)</p>
+        <p><strong>5. 🎥 Video:</strong> Visible hone pe autoplay, chup jaaye toh pause</p>
+        <p><strong>6. 💬 Chat:</strong> Naye messages visible hone pe "read" mark karo</p>
+      </div>
+    </div>
+
+    <!-- Comparison -->
+    <div class="section">
+      <h2>⚔️ MutationObserver vs IntersectionObserver</h2>
+      <div class="theory-box">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr style="border-bottom: 1px solid rgba(255,255,255,0.2);">
+            <th style="padding: 10px; text-align: left;">Feature</th>
+            <th style="padding: 10px; text-align: left;">MutationObserver</th>
+            <th style="padding: 10px; text-align: left;">IntersectionObserver</th>
+          </tr>
+          <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <td style="padding: 10px;"><strong>Purpose</strong></td>
+            <td style="padding: 10px;">DOM changes detect</td>
+            <td style="padding: 10px;">Visibility detect</td>
+          </tr>
+          <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <td style="padding: 10px;"><strong>Kab Use</strong></td>
+            <td style="padding: 10px;">Element add/remove/modify</td>
+            <td style="padding: 10px;">Element screen pe dikhna</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px;"><strong>Example</strong></td>
+            <td style="padding: 10px;">Form validation, Ads block</td>
+            <td style="padding: 10px;">Lazy load, Infinite scroll</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="spacer">🎉 You've reached the end! 🎉</div>
+  </div>
+
+  <script>
+    // ============================================
+    // INTERSECTION OBSERVER - CARD ANIMATIONS
+    // ============================================
+
+    let visibleCards = new Set();
+
+    const cardObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        const cardNum = entry.target.dataset.card;
+        const statusEl = document.getElementById(`status-${cardNum}`);
+
+        if (entry.isIntersecting) {
+          // Card visible ho gaya
+          entry.target.classList.add('visible');
+          statusEl.textContent = 'Visible ✓';
+          statusEl.className = 'card-status status-visible';
+          visibleCards.add(cardNum);
+        } else {
+          // Card hide ho gaya
+          entry.target.classList.remove('visible');
+          statusEl.textContent = 'Hidden';
+          statusEl.className = 'card-status status-hidden';
+          visibleCards.delete(cardNum);
+        }
+
+        // Update visible count
+        document.getElementById('visibleCount').textContent = visibleCards.size;
+      });
+    }, {
+      threshold: 0.5,  // 50% visible hone pe trigger
+      rootMargin: '0px'
+    });
+
+    // Observe all cards
+    document.querySelectorAll('.observable-card').forEach(card => {
+      cardObserver.observe(card);
+    });
+
+
+    // ============================================
+    // LAZY LOADING IMAGES
+    // ============================================
+
+    const imageObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const img = entry.target;
+          const imageNum = img.dataset.image;
+
+          // Simulate loading
+          setTimeout(() => {
+            img.classList.add('loaded');
+            img.innerHTML = `✅ Image ${imageNum} Loaded!`;
+          }, 500);
+
+          // Stop observing this image
+          observer.unobserve(img);
+        }
+      });
+    }, {
+      threshold: 0.1,
+      rootMargin: '50px'
+    });
+
+    document.querySelectorAll('.lazy-image').forEach(img => {
+      imageObserver.observe(img);
+    });
+
+
+    // ============================================
+    // SCROLL PROGRESS BAR
+    // ============================================
+
+    window.addEventListener('scroll', () => {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const scrollPercent = (scrollTop / docHeight) * 100;
+      document.getElementById('progressBar').style.width = scrollPercent + '%';
+    });
+
+    console.log('IntersectionObserver is watching elements!');
+  </script>
+</body>
+
+</html>

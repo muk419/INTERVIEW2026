@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MutationObserver - Complete Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #00d9ff;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+        }
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .section h2 {
+            color: #00d9ff;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        .theory-box {
+            background: rgba(0, 217, 255, 0.1);
+            border-left: 4px solid #00d9ff;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 0 10px 10px 0;
+        }
+        .btn {
+            background: linear-gradient(135deg, #00d9ff, #0099cc);
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 217, 255, 0.4);
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #51cf66, #40c057);
+        }
+        #targetElement {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            min-height: 100px;
+            margin: 15px 0;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+        }
+        #targetElement p {
+            margin: 5px 0;
+            padding: 8px;
+            background: rgba(0, 217, 255, 0.2);
+            border-radius: 5px;
+        }
+        .log-box {
+            background: #0a0a0a;
+            border-radius: 10px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        .log-entry {
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 5px;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .log-add { background: rgba(81, 207, 102, 0.2); border-left: 3px solid #51cf66; }
+        .log-remove { background: rgba(255, 107, 107, 0.2); border-left: 3px solid #ff6b6b; }
+        .log-attr { background: rgba(255, 193, 7, 0.2); border-left: 3px solid #ffc107; }
+        .log-text { background: rgba(0, 217, 255, 0.2); border-left: 3px solid #00d9ff; }
+        
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #00d9ff;
+        }
+        pre {
+            background: #0a0a0a;
+            padding: 15px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+        }
+        .highlight { color: #ffc107; }
+        .comment { color: #6a9955; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 MutationObserver</h1>
+        <p class="subtitle">DOM Changes ko Observe karna</p>
+
+        <!-- Theory Section -->
+        <div class="section">
+            <h2>📚 Theory - MutationObserver Kya Hai?</h2>
+            <div class="theory-box">
+                <p><strong>MutationObserver</strong> ek Web API hai jo DOM mein hone wale changes ko detect karta hai.</p>
+                <br>
+                <p><strong>Kab Use Karte Hain?</strong></p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>Jab koi element add/remove ho</li>
+                    <li>Jab kisi element ka attribute change ho</li>
+                    <li>Jab text content change ho</li>
+                    <li>Third-party scripts ke changes track karne ke liye</li>
+                </ul>
+            </div>
+            
+            <h3 style="color: #ffc107; margin: 15px 0;">💡 Syntax:</h3>
+            <pre><code><span class="comment">// Step 1: Observer banao</span>
+const observer = new MutationObserver(<span class="highlight">callback</span>);
+
+<span class="comment">// Step 2: Observe karna shuru karo</span>
+observer.observe(<span class="highlight">targetElement</span>, {
+    childList: true,      <span class="comment">// Child add/remove detect</span>
+    attributes: true,     <span class="comment">// Attribute changes detect</span>
+    characterData: true,  <span class="comment">// Text content changes detect</span>
+    subtree: true         <span class="comment">// Nested elements bhi observe karo</span>
+});
+
+<span class="comment">// Step 3: Band karna ho toh</span>
+observer.disconnect();</code></pre>
+        </div>
+
+        <!-- Live Demo Section -->
+        <div class="section">
+            <h2>🎮 Live Demo - Try Karo!</h2>
+            
+            <p style="margin-bottom: 15px;">Neeche buttons click karke dekho - har change log mein dikhega:</p>
+            
+            <div style="margin-bottom: 15px;">
+                <button class="btn btn-success" onclick="addElement()">➕ Element Add Karo</button>
+                <button class="btn btn-danger" onclick="removeElement()">➖ Element Remove Karo</button>
+                <button class="btn" onclick="changeAttribute()">🎨 Attribute Change</button>
+                <button class="btn" onclick="changeText()">✏️ Text Change</button>
+                <button class="btn btn-danger" onclick="clearLogs()">🗑️ Clear Logs</button>
+            </div>
+
+            <h3 style="color: #51cf66; margin-bottom: 10px;">Target Element (Isko observe kar rahe hain):</h3>
+            <div id="targetElement">
+                <p id="firstChild">Pehla Element 🎯</p>
+            </div>
+
+            <h3 style="color: #ffc107; margin-bottom: 10px;">📋 Mutation Logs:</h3>
+            <div class="log-box" id="logBox">
+                <div class="log-entry log-text">Observer ready hai... kuch bhi change karo!</div>
+            </div>
+        </div>
+
+        <!-- Code Example Section -->
+        <div class="section">
+            <h2>💻 Complete Code Example</h2>
+            <pre><code><span class="comment">// 1. Target element select karo</span>
+const target = document.getElementById('targetElement');
+
+<span class="comment">// 2. Callback function banao - jab bhi change hoga yeh chalega</span>
+function handleMutations(mutationsList) {
+    for (const mutation of mutationsList) {
+        
+        if (mutation.type === '<span class="highlight">childList</span>') {
+            <span class="comment">// Jab child add/remove ho</span>
+            mutation.addedNodes.forEach(node => {
+                console.log('Added:', node);
+            });
+            mutation.removedNodes.forEach(node => {
+                console.log('Removed:', node);
+            });
+        }
+        
+        if (mutation.type === '<span class="highlight">attributes</span>') {
+            <span class="comment">// Jab attribute change ho</span>
+            console.log('Attribute changed:', mutation.attributeName);
+        }
+        
+        if (mutation.type === '<span class="highlight">characterData</span>') {
+            <span class="comment">// Jab text change ho</span>
+            console.log('Text changed:', mutation.target.textContent);
+        }
+    }
+}
+
+<span class="comment">// 3. Observer create karo</span>
+const observer = new MutationObserver(handleMutations);
+
+<span class="comment">// 4. Observe karna shuru karo</span>
+observer.observe(target, {
+    childList: true,
+    attributes: true,
+    characterData: true,
+    subtree: true
+});
+
+<span class="comment">// 5. Jab zaroorat na ho toh band karo</span>
+<span class="comment">// observer.disconnect();</span></code></pre>
+        </div>
+
+        <!-- Real World Use Cases -->
+        <div class="section">
+            <h2>🌍 Real World Use Cases</h2>
+            <div class="theory-box">
+                <p><strong>1. Infinite Scroll:</strong> Jab naye items add ho, unpe event lagao</p>
+                <p><strong>2. Form Validation:</strong> Input changes detect karo</p>
+                <p><strong>3. Ad Blockers:</strong> Ads inject hone pe remove karo</p>
+                <p><strong>4. Dark Mode:</strong> Class change hone pe update karo</p>
+                <p><strong>5. Analytics:</strong> DOM changes track karo</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // MUTATION OBSERVER IMPLEMENTATION
+        // ============================================
+        
+        const targetElement = document.getElementById('targetElement');
+        const logBox = document.getElementById('logBox');
+        let elementCount = 1;
+
+        // Callback function - jab bhi mutation hogi yeh chalega
+        function handleMutations(mutationsList) {
+            for (const mutation of mutationsList) {
+                let logMessage = '';
+                let logClass = '';
+
+                switch (mutation.type) {
+                    case 'childList':
+                        // Child nodes add/remove hue
+                        mutation.addedNodes.forEach(node => {
+                            if (node.nodeType === 1) { // Element node
+                                logMessage = `➕ ADDED: <${node.tagName.toLowerCase()}> "${node.textContent.substring(0, 30)}"`;
+                                logClass = 'log-add';
+                                addLog(logMessage, logClass);
+                            }
+                        });
+                        mutation.removedNodes.forEach(node => {
+                            if (node.nodeType === 1) {
+                                logMessage = `➖ REMOVED: <${node.tagName.toLowerCase()}> "${node.textContent.substring(0, 30)}"`;
+                                logClass = 'log-remove';
+                                addLog(logMessage, logClass);
+                            }
+                        });
+                        break;
+
+                    case 'attributes':
+                        logMessage = `🎨 ATTRIBUTE: "${mutation.attributeName}" changed on <${mutation.target.tagName.toLowerCase()}>`;
+                        logClass = 'log-attr';
+                        addLog(logMessage, logClass);
+                        break;
+
+                    case 'characterData':
+                        logMessage = `✏️ TEXT: Content changed to "${mutation.target.textContent.substring(0, 30)}..."`;
+                        logClass = 'log-text';
+                        addLog(logMessage, logClass);
+                        break;
+                }
+            }
+        }
+
+        // Observer create karo
+        const observer = new MutationObserver(handleMutations);
+
+        // Observer start karo
+        observer.observe(targetElement, {
+            childList: true,      // Child add/remove observe karo
+            attributes: true,     // Attribute changes observe karo
+            characterData: true,  // Text changes observe karo
+            subtree: true,        // Nested elements bhi observe karo
+            attributeOldValue: true,
+            characterDataOldValue: true
+        });
+
+        // ============================================
+        // DEMO FUNCTIONS
+        // ============================================
+
+        function addElement() {
+            elementCount++;
+            const newP = document.createElement('p');
+            newP.id = `element-${elementCount}`;
+            newP.textContent = `Naya Element #${elementCount} 🆕 (${new Date().toLocaleTimeString()})`;
+            targetElement.appendChild(newP);
+        }
+
+        function removeElement() {
+            const children = targetElement.querySelectorAll('p');
+            if (children.length > 0) {
+                children[children.length - 1].remove();
+            } else {
+                addLog('⚠️ Koi element nahi hai remove karne ko!', 'log-remove');
+            }
+        }
+
+        function changeAttribute() {
+            const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16);
+            targetElement.style.borderColor = randomColor;
+            targetElement.setAttribute('data-updated', new Date().toLocaleTimeString());
+        }
+
+        function changeText() {
+            const firstChild = targetElement.querySelector('p');
+            if (firstChild && firstChild.firstChild) {
+                const texts = ['Text Badal Gaya! ✨', 'Naya Text! 🎉', 'Updated! 🚀', 'Changed! 💫'];
+                firstChild.firstChild.textContent = texts[Math.floor(Math.random() * texts.length)];
+            }
+        }
+
+        function addLog(message, className) {
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${className}`;
+            logEntry.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong> - ${message}`;
+            logBox.appendChild(logEntry);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        function clearLogs() {
+            logBox.innerHTML = '<div class="log-entry log-text">Logs cleared! Observer still active...</div>';
+        }
+
+        console.log('MutationObserver is watching the target element!');
+    </script>
+</body>
+</html>

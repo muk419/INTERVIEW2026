@@ -77,8 +77,9 @@ console.log("---------------------------------------------");
 
 // Example 1: Multiplier Factory
 function createMultiplier(multiplier) {
+  let count = 10;
   return function (number) {
-    return number * multiplier;
+    return number * multiplier*count;
   };
 }
 
