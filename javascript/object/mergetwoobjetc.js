@@ -6,5 +6,4 @@ let b={
   a:"data2",
   b:3
 }
-
 console.log(Object.assign(a,b))
